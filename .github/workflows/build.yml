@@ -2,6 +2,8 @@ name: Build APK
 on:
   push:
   workflow_dispatch:
+permissions:
+  contents: write
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -15,3 +17,9 @@ jobs:
         with:
           name: priority-matrix-apk
           path: app/build/outputs/apk/release/*.apk
+      - name: Publish APK as a GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp app/build/outputs/apk/release/app-release.apk Priority.apk
+          gh release create "v1.0-${{ github.run_number }}" Priority.apk --title "Priority build ${{ github.run_number }}" --notes "Install Priority.apk on Android"
