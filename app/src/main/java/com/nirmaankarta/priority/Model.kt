@@ -5,10 +5,11 @@ import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
 enum class Quadrant(val label: String, val title: String, val tagline: String, val accent: Color) {
-    Q1("Q1", "Do First", "Urgent & Important", Color(0xFFEF4444)),
-    Q2("Q2", "Schedule", "Not Urgent, but Important", Color(0xFF3B82F6)),
-    Q3("Q3", "Delegate", "Urgent, Not Important", Color(0xFFF59E0B)),
-    Q4("Q4", "Eliminate", "Neither Urgent nor Important", Color(0xFF64748B)),
+    // label = Roman numeral badge, title = heading shown on the card, tagline = classic action name
+    Q1("I", "Urgent & Important", "Do first", Color(0xFFF2575F)),
+    Q2("II", "Not Urgent & Important", "Schedule", Color(0xFFF5A60B)),
+    Q3("III", "Urgent & Unimportant", "Delegate", Color(0xFF4A6CF7)),
+    Q4("IV", "Not Urgent & Unimportant", "Eliminate", Color(0xFF12B981)),
 }
 
 data class Task(
@@ -17,6 +18,7 @@ data class Task(
     val quadrant: Quadrant,
     val done: Boolean = false,
     val createdAt: Long = System.currentTimeMillis(),
+    val dueDate: Long? = null, // LocalDate epoch-day, optional
 )
 
 enum class ThemeMode { System, Light, Dark }

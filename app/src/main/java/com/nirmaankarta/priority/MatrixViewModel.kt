@@ -30,10 +30,10 @@ class MatrixViewModel(app: Application) : AndroidViewModel(app) {
     fun audition(q: Quadrant, add: Boolean) = Sfx.play(q, add) // ignores the SFX switch
 
     // ---- tasks ----
-    fun addTask(text: String, q: Quadrant) {
+    fun addTask(text: String, q: Quadrant, due: Long? = null) {
         val t = text.trim()
         if (t.isEmpty()) return
-        tasks.add(0, Task(id = System.nanoTime(), text = t, quadrant = q))
+        tasks.add(Task(id = System.nanoTime(), text = t, quadrant = q, dueDate = due))
         saveTasks()
         play(q, true)
         registerActivity()
@@ -51,12 +51,23 @@ class MatrixViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun move(id: Long, to: Quadrant) {
-        val i = tasks.indexOfFirst { it.id == id }
-        if (i < 0 || tasks[i].quadrant == to) return
-        tasks[i] = tasks[i].copy(quadrant = to)
+    /**
+     * Drag & drop: puts task [id] into quadrant [q] at position [index] among that
+     * quadrant's other tasks. Works for both cross-quadrant moves and re-ordering.
+     */
+    fun moveTo(id: Long, q: Quadrant, index: Int) {
+        val from = tasks.indexOfFirst { it.id == id }
+        if (from < 0) return
+        val old = tasks.removeAt(from)
+        val peers = tasks.filter { it.quadrant == q }
+        val at = when {
+            peers.isEmpty() -> tasks.size
+            index >= peers.size -> tasks.indexOf(peers.last()) + 1
+            else -> tasks.indexOf(peers[index.coerceAtLeast(0)])
+        }
+        tasks.add(at, old.copy(quadrant = q))
         saveTasks()
-        play(to, true)
+        if (old.quadrant != q) play(q, true)
     }
 
     fun remove(id: Long) {

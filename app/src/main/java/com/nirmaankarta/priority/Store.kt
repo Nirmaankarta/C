@@ -18,6 +18,7 @@ class Store(context: Context) {
                 quadrant = Quadrant.valueOf(o.getString("q")),
                 done = o.optBoolean("done"),
                 createdAt = o.optLong("at"),
+                dueDate = if (o.isNull("due")) null else o.getLong("due"),
             )
         }
     }.getOrDefault(emptyList())
@@ -27,7 +28,7 @@ class Store(context: Context) {
         list.forEach {
             arr.put(
                 JSONObject().put("id", it.id).put("text", it.text).put("q", it.quadrant.name)
-                    .put("done", it.done).put("at", it.createdAt)
+                    .put("done", it.done).put("at", it.createdAt).put("due", it.dueDate ?: JSONObject.NULL)
             )
         }
         sp.edit().putString("tasks", arr.toString()).apply()

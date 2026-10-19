@@ -31,7 +31,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.rememberDatePickerState
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -67,13 +72,15 @@ import kotlinx.coroutines.delay
 fun AddTaskSheet(
     initial: Quadrant,
     onPreview: (Quadrant) -> Unit,
-    onSubmit: (String, Quadrant) -> Unit,
+    onSubmit: (String, Quadrant, Long?) -> Unit,
     onDismiss: () -> Unit,
 ) {
     var text by remember { mutableStateOf("") }
     var q by remember { mutableStateOf(initial) }
+    var due by remember { mutableStateOf<Long?>(null) } // LocalDate epoch-day
+    var pickDate by remember { mutableStateOf(false) }
     val focus = remember { FocusRequester() }
-    val submit = { if (text.isNotBlank()) onSubmit(text, q) }
+    val submit = { if (text.isNotBlank()) onSubmit(text, q, due) }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -111,15 +118,36 @@ fun AddTaskSheet(
                     }
                 }
             }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                OutlinedButton(onClick = { pickDate = true }) {
+                    Text(due?.let { LocalDate.ofEpochDay(it).format(DateTimeFormatter.ofPattern("d MMM")) } ?: "Add due date")
+                }
+                if (due != null) TextButton(onClick = { due = null }) { Text("Clear") }
+            }
             Button(
                 onClick = { submit() },
                 enabled = text.isNotBlank(),
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = q.accent, contentColor = Color.White),
-            ) { Text("Add to ${q.title}") }
+            ) { Text("Add to ${q.label} · ${q.tagline}") }
         }
     }
     LaunchedEffect(Unit) { delay(150); runCatching { focus.requestFocus() } }
+
+    if (pickDate) {
+        val state = rememberDatePickerState()
+        DatePickerDialog(
+            onDismissRequest = { pickDate = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    // the picker returns UTC-midnight millis, i.e. whole days since the epoch
+                    due = state.selectedDateMillis?.let { it / 86_400_000L }
+                    pickDate = false
+                }) { Text("OK") }
+            },
+            dismissButton = { TextButton(onClick = { pickDate = false }) { Text("Cancel") } },
+        ) { DatePicker(state) }
+    }
 }
 
 // ------------------------------------------------------------------ profile & preferences
